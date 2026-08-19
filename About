@@ -1,0 +1,74 @@
+# Password Security Checker
+
+A command-line tool that evaluates password strength using multiple industry-standard
+signals, and checks whether a password has appeared in known data breaches — without
+ever sending the actual password over the network.
+
+## Features
+
+- **Length & character variety** — checks for lowercase, uppercase, digits, symbols
+- **Entropy estimation** — estimates bits of entropy based on character pool size
+- **Pattern detection** — flags repeated characters (`aaa`, `111`) and sequential runs (`abcd`, `4321`)
+- **Common password detection** — checks against a small built-in list of frequently used weak passwords
+- **Breach check** — uses the [Have I Been Pwned Passwords API](https://haveibeenpwned.com/API/v3#PwnedPasswords)
+  via the **k-anonymity model**: only the first 5 characters of the password's SHA-1 hash
+  are sent to the API. The full password and full hash never leave your machine.
+- **0–100 scoring system** with a Strong / Moderate / Weak / Very Weak verdict
+
+## Usage
+
+```bash
+# Prompt for password securely (input hidden)
+python password_checker.py
+
+# Pass password as an argument (not recommended on shared systems — visible in shell history)
+python password_checker.py --password "MySecret123!"
+
+# Skip the online breach check (offline / air-gapped use)
+python password_checker.py --no-online
+```
+
+## Example output
+
+```
+=== Password Security Report ===
+Length:            12
+Lowercase letters: Yes
+Uppercase letters: Yes
+Digits:            Yes
+Symbols:           Yes
+Common password:   No
+Repeated chars:    No
+Sequential chars:  No
+Estimated entropy: 71.0 bits
+Breach check:      not found in known breaches
+
+Score:   92/100
+Verdict: Strong
+=================================
+```
+
+## How the breach check stays private
+
+The Have I Been Pwned "range" API implements **k-anonymity**: instead of sending your
+password or its full hash, the tool sends only the first 5 hex characters of the
+SHA-1 hash. The API returns *all* hash suffixes that share that prefix (usually
+hundreds), and the matching is done locally. This means HIBP never learns which
+exact password you checked.
+
+## Possible extensions
+
+- Load a much larger common-password wordlist (e.g. from [SecLists](https://github.com/danielmiessler/SecLists))
+- Add a `zxcvbn`-style pattern-based strength estimator instead of pure entropy
+- Build a small Flask/CLI GUI front-end
+- Add unit tests (`pytest`) covering each check function
+
+## Disclaimer
+
+This tool is for educational and personal security-awareness purposes. It does not
+guarantee that a "Strong" password is unbreakable, and does not replace a proper
+password manager or multi-factor authentication.
+
+## License
+
+MIT
